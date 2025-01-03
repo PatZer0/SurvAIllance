@@ -1,3 +1,8 @@
+# 排除文件
+.legacy/
+.stfolder/
+data/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
