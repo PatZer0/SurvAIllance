@@ -16,7 +16,12 @@ class LLMConfig:
     short_text_prompt = '请用10个字总结这段监控内容，不要超过20个字，不要包含画面、图片、镜头、视频等词语，只输出一句话即可。'
     # 视觉模型
     visual_model = 'moondream:v2'
+    # visual_model = 'llava:7b'
     visual_prompt = 'describe this surveillance image in the third person, focus on the content and mention nothing of the image itself'
+    # 嵌入模型
+    embedding_model = 'nomic-embed-text'
+    # 提问模型
+    query_model = 'qwen2.5:7b'
 
 class LogConfig:
     log_dir = "logs"
@@ -27,5 +32,5 @@ class LogConfig:
 class DaemonConfig:
     scan_interval_s = 10
 
-class GraphRAGConfig:
-    pass
+class ChromaDBConfig:
+    persist_dir = 'data/database'
