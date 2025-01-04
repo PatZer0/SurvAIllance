@@ -1,9 +1,9 @@
 from ollama import chat
 from ollama import ChatResponse
+from config import LLMConfig
 
-LLM_MODEL = 'qwen2.5:7b'
-# LLM_MODEL = 'qwen2.5-7b-instruct:latest'
-LLM_PROMPT = '请基于这些从同一段监控视频中抽取的帧画面的文字描述，用几句话简单地描述这期间发生的事情，就像连续发生的一样，不需要背景信息、格式，不要包含画面、图片、镜头、视频等词语，只输出连续一段话即可。'
+LLM_PROMPT = LLMConfig.text_prompt
+LLM_MODEL = LLMConfig.text_model
 
 def text_generate_conclusion(list_of_responses, print_input=False, print_output=False):
     messages = []

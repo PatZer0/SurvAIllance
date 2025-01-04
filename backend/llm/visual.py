@@ -1,10 +1,11 @@
 from ollama import chat
 from ollama import ChatResponse
+from tqdm import tqdm
 
-VLM_MODEL = 'moondream:v2'
-# VLM_MODEL = 'llava:7b'
-# VLM_PROMPT = 'describe this image in the third person, do not say image'
-VLM_PROMPT = 'describe this surveillance image in the third person, focus on the content and mention nothing of the image itself'
+from config import LLMConfig
+
+VLM_MODEL = LLMConfig.visual_model
+VLM_PROMPT = LLMConfig.visual_prompt
 
 def visual_explain_single_image(image_path, print_output=False):
     response: ChatResponse = chat(model=VLM_MODEL, messages=[
@@ -20,7 +21,7 @@ def visual_explain_single_image(image_path, print_output=False):
 
 def visual_explain_multiple_images(image_paths_list, print_output=False):
     responses = []
-    for image_path in image_paths_list:
+    for image_path in tqdm(image_paths_list, desc='视觉模型识别', unit='图片'):
         response = visual_explain_single_image(image_path, print_output=print_output)
         responses.append(response)
 
