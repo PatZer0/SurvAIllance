@@ -33,17 +33,21 @@ class LLMConfig:
     embedding_model = 'qwen2.5:7b'
     # 提问模型
     query_model = 'qwen2.5:7b'
-    query_prompt = ('请结合当前时间和数据库搜索结果，回答用户的问题。'
-                    '注意过滤掉时间不符合的结果。'
-                    '回答格式: 总结所有内容，然后简单介绍发生的事情。'
+    query_prompt = ('结合当前时间和数据库搜索结果，回答用户的问题。'
+                    '过滤掉时间不符合的结果, 如果过滤后没有相关数据，直接输出“没有查询结果。"'
+                    '当用户提到"我的"时，回答时请说"您的……"'
+                    '回答格式: 根据搜索结果…'
+                    '您提供的时间段为xxxx（根据已有时间信息，输出具体日期时间）'
+                    '总结所有内容，然后简单介绍发生的事情。'
                     '<时间>发生了XX, XX, XX。'
                     '如果查询仅限于几天内，则使用昨天、前天、XX号这样的词。'
-                    '如果查询跨越了月份，则使用具体日期。')
+                    '如果查询跨越了月份，则使用具体日期。'
+                    '注意总字数不要超过100字。尽可能简短容易理解。"')
 
 class LogConfig:
     log_dir = "logs"
     log_file = os.path.join(log_dir, f"{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log")
-    log_level = logging.DEBUG
+    log_level = logging.INFO
     log_format = "[%(asctime)s] [%(levelname)s] %(message)s"
 
 class RAGConfig:

@@ -27,7 +27,7 @@ def get_current_time():
     return current_time_str
 
 
-def rag_query(user_query=None):
+def rag_query(user_query=None, stream=False):
     while not user_query:
         logger.debug('未输入查询内容，获取用户输入')
         user_query = get_user_query_input()
@@ -35,6 +35,7 @@ def rag_query(user_query=None):
     rag_result = get_rag_result(user_query)
     text_response = text_generate_response_from_query_rag(user_query=user_query,
                                                           rag_result=rag_result,
-                                                          current_time=get_current_time())
+                                                          current_time=get_current_time(),
+                                                          stream=stream)
     logger.debug(f'查询结果: {text_response}')
     return text_response

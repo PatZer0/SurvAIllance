@@ -60,7 +60,7 @@ def text_generate_short_conclusion(text, print_input=False, print_output=False):
     return response.message.content
 
 
-def text_generate_response_from_query_rag(user_query, rag_result, current_time):
+def text_generate_response_from_query_rag(user_query, rag_result, current_time, stream=False):
     messages = list()
     messages.append({
         'role': 'system',
@@ -71,10 +71,18 @@ def text_generate_response_from_query_rag(user_query, rag_result, current_time):
         'content': f'当前时间是{current_time}',
         })
     messages.append({
+        'role': 'system',
+        'content': QUERY_MODEL_PROMPT,
+        })
+    messages.append({
         'role': 'user',
         'content': user_query,
     })
     logger.debug(f'查询消息: {messages}')
-    response: ChatResponse = chat(QUERY_MODEL, messages=messages)
+    if not stream:
+        response: ChatResponse = chat(QUERY_MODEL, messages=messages)
+    else:
+        for part in chat(QUERY_MODEL, messages=messages, stream=True):
+            print(part['message']['content'], end='', flush=True)
     logger.debug(f'查询响应: {response.message.content}')
     return response.message.content

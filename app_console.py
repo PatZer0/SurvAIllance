@@ -1,7 +1,6 @@
 import os
 
 from backend.data.dataloader import VideoDataLoader
-from backend.vdb.vector_database import vdb_search_event
 from backend.rag.search_vdb_for_llm import rag_query
 
 from logger import logger
@@ -22,5 +21,5 @@ if __name__ == '__main__':
         video_obj.add_event_to_database()
 
     while True:
-        rag_query()
-
+        query_result = rag_query()
+        print(query_result)

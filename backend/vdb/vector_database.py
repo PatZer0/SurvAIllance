@@ -52,14 +52,14 @@ def vdb_add_events(texts, metadatas):
             new_metadatas.append(meta)
             new_ids.append(event_id)
         else:
-            logger.info(f"事件已存在，跳过添加: {event_id}")
+            logger.debug(f"事件已存在，跳过添加: {event_id}")
 
     # 添加新的事件
     if new_texts:
         vector_store.add_texts(new_texts, new_metadatas, ids=new_ids)
-        logger.info(f'成功向数据库添加 {len(new_texts)} 个新事件')
+        logger.debug(f'成功向数据库添加 {len(new_texts)} 个新事件')
     else:
-        logger.info("没有新的事件需要添加")
+        logger.debug("没有新的事件需要添加")
 
 
 def vdb_search_event(query):
