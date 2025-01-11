@@ -2,6 +2,7 @@
 .legacy/
 .stfolder/
 data/
+test/simple
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

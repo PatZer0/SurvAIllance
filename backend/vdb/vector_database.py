@@ -1,6 +1,9 @@
+# backend/vdb/vector_database.py
+
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 import hashlib
+from datetime import datetime
 
 from logger import logger
 from config import ChromaDBConfig, LLMConfig, RAGConfig
@@ -24,7 +27,22 @@ def generate_event_id(text, metadata):
     """
     根据事件描述和元数据生成唯一的事件ID。
     """
-    unique_str = text + metadata.get('video_name', '') + metadata.get('start_time', '') + metadata.get('end_time', '')
+    # 将 datetime 对象转换为字符串
+    start_time = metadata.get('start_time', '')
+    end_time = metadata.get('end_time', '')
+
+    if isinstance(start_time, datetime):
+        start_time_str = start_time.strftime("%Y-%m-%d %H:%M:%S.%f")
+    else:
+        start_time_str = str(start_time)
+
+    if isinstance(end_time, datetime):
+        end_time_str = end_time.strftime("%Y-%m-%d %H:%M:%S.%f")
+    else:
+        end_time_str = str(end_time)
+
+    # 拼接字符串，生成唯一标识符
+    unique_str = text + metadata.get('video_name', '') + start_time_str + end_time_str
     return hashlib.md5(unique_str.encode('utf-8')).hexdigest()
 
 
@@ -48,8 +66,15 @@ def vdb_add_events(texts, metadatas):
     new_ids = []
     for text, meta, event_id in zip(texts, metadatas, ids):
         if event_id not in existing_ids:
+            # 在这里将 metadata 中的 datetime 对象转换为字符串
+            meta_converted = {}
+            for key, value in meta.items():
+                if isinstance(value, datetime):
+                    meta_converted[key] = value.strftime("%Y-%m-%d %H:%M:%S.%f")
+                else:
+                    meta_converted[key] = value
             new_texts.append(text)
-            new_metadatas.append(meta)
+            new_metadatas.append(meta_converted)
             new_ids.append(event_id)
         else:
             logger.debug(f"事件已存在，跳过添加: {event_id}")

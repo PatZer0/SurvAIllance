@@ -6,6 +6,36 @@ class GlobalConfig:
     # 全局配置
     data_dir = 'data'
 
+class RTSPClientConfig:
+    # RTSP 客户端配置
+    rtsp_url = 'rtsp://127.0.0.1:8554/stream'
+    # 尝试
+    rtsp_retry_duration_s = 3
+    rtsp_max_retries = 10
+
+class CameraConfig:
+    # 摄像头配置
+    camera_id = 0
+
+class VideoRecordingConfig:
+    cold_start_wait_s = 10  # 冷启动等待时间，秒
+
+    video_motion_detect_interval_ms = 500  # 运动检测间隔，毫秒
+    video_dir = 'data'  # 视频保存目录
+    video_cache_duration_s = 10  # 视频缓存时长，秒
+    video_fps = 30  # 视频帧率
+    video_size = [1920, 1080]  # 视频分辨率
+    video_codec = 'mp4v'  # 视频编码器，尝试 'mp4v', 'X264', 'avc1' 等
+    video_bitrate_mbps = 4  # 视频码率，Mbps
+    video_recording_window_s = 10  # 无运动后继续录制的时间窗口，秒
+    min_motion_area = 500  # 运动检测的最小区域，像素面积
+
+    # 运动检测灵敏度参数
+    motion_bg_history = 300  # 背景建模历史帧数
+    motion_bg_varThreshold = 50  # 背景减除的方差阈值
+    motion_detectShadows = True  # 是否检测阴影
+    motion_thresh_val = 250  # 阈值化的阈值值
+    motion_dilate_iterations = 3  # 膨胀操作的迭代次数
 
 class VideoConfig:
     motion_threshold = 0.05
@@ -55,7 +85,7 @@ class RAGConfig:
     top_k = 5
 
 class DaemonConfig:
-    scan_interval_s = 10
+    scan_interval_s = 1
 
 class ChromaDBConfig:
     persist_dir = 'data/database'

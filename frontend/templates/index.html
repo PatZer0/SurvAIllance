@@ -1,0 +1,300 @@
+<!-- templates/index.html -->
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SurvAIllence</title>
+    <!-- 引入Bootstrap CSS -->
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* 自定义样式 */
+        .thumbnail {
+            width: 200px; /* 固定宽度 */
+            height: 200px;
+            object-fit: cover;
+            flex-shrink: 0; /* 防止缩放 */
+        }
+        .event-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+        .event-description {
+            flex: 1;
+            margin-left: 15px;
+        }
+        .event-time {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: gray;
+        }
+        .loading {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .progress {
+            height: 20px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-4">
+        <!-- 顶部大标题 -->
+        <h1 class="text-center mb-4">SurvAIllence</h1>
+
+        <!-- 功能区切换滑块 -->
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="realtime-tab" data-bs-toggle="tab" data-bs-target="#realtime" type="button" role="tab" aria-controls="realtime" aria-selected="true">实时</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="query-tab" data-bs-toggle="tab" data-bs-target="#query" type="button" role="tab" aria-controls="query" aria-selected="false">查询</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+            <!-- 实时界面 -->
+            <div class="tab-pane fade show active" id="realtime" role="tabpanel" aria-labelledby="realtime-tab">
+                <div class="mt-4">
+                    <!-- 实时视频预览 -->
+                    <div class="text-center">
+                        <img src="{{ url_for('video_feed') }}" class="img-fluid" alt="实时视频预览">
+                    </div>
+                </div>
+
+                <!-- 事件列表 -->
+                <div class="mt-4">
+                    <h3>事件列表</h3>
+                    <div id="events-list">
+                        <!-- 动态加载事件条目 -->
+                        <div class="loading">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p>加载事件...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 查询界面 -->
+            <div class="tab-pane fade" id="query" role="tabpanel" aria-labelledby="query-tab">
+                <div class="mt-4">
+                    <h3>文本查询</h3>
+                    <form id="query-form" class="mb-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="query-input" placeholder="请输入查询内容" required>
+                            <button class="btn btn-primary" type="submit">发送</button>
+                        </div>
+                    </form>
+
+                    <!-- 加载动画 -->
+                    <div id="query-loading" class="loading" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                        <p>查询中...</p>
+                    </div>
+
+                    <!-- 查询结果 -->
+                    <div id="query-result">
+                        <!-- 流式传输结果 -->
+                        <pre id="query-output"></pre>
+                    </div>
+
+                    <!-- 引用的视频列表 -->
+                    <div class="mt-4" id="referenced-videos" style="display: none;">
+                        <h3>引用的视频</h3>
+                        <div id="referenced-videos-list">
+                            <!-- 动态加载引用视频条目 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 视频播放弹窗 -->
+    <div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">视频播放</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <video id="video-player" width="100%" controls>
+                        <source src="" type="video/mp4">
+                        您的浏览器不支持视频播放。
+                    </video>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入Bootstrap JS和依赖 -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <!-- 引入jQuery（可选，便于AJAX处理） -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- 自定义JavaScript -->
+    <script>
+        $(document).ready(function() {
+            // 加载事件列表
+            function loadEvents() {
+                $.ajax({
+                    url: '/events',
+                    method: 'GET',
+                    success: function(data) {
+                        $('#events-list').empty();
+                        if (data.length === 0) {
+                            $('#events-list').append('<p>暂无事件。</p>');
+                            return;
+                        }
+                        data.forEach(function(event) {
+                            const eventItem = `
+                                <div class="event-item card" data-video-path="${event.video_path}" data-event-id="${event.event_id}">
+                                    <img src="${event.thumbnail_path}" class="thumbnail me-3" alt="缩略图">
+                                    <div class="event-description card-body">
+                                        <p>${event.description}</p>
+                                        <div class="event-time">${event.start_time} ~ ${event.end_time}</div>
+                                    </div>
+                                </div>
+                            `;
+                            $('#events-list').append(eventItem);
+                        });
+                    },
+                    error: function(err) {
+                        console.error('获取事件列表失败:', err);
+                        $('#events-list').html('<p>加载事件失败。</p>');
+                    }
+                });
+            }
+
+            // 定时加载事件列表，每秒一次
+            setInterval(loadEvents, 1000);
+            loadEvents(); // 初始加载
+
+            // 处理点击事件条目
+            $('#events-list').on('click', '.event-item', function() {
+                const videoPath = $(this).data('video-path');
+                const eventId = $(this).data('event-id');
+
+                if (videoPath && eventId) {
+                    // 设置视频源
+                    $('#video-player source').attr('src', `/play_video/${eventId}`);
+                    $('#video-player')[0].load();
+
+                    // 显示弹窗
+                    var videoModal = new bootstrap.Modal(document.getElementById('videoModal'), {
+                        keyboard: false
+                    });
+                    videoModal.show();
+                } else {
+                    alert('无法获取视频路径或事件ID。');
+                }
+            });
+
+            // 处理查询表单提交
+            $('#query-form').submit(function(e) {
+                e.preventDefault();
+                const query = $('#query-input').val();
+                const stream = false; // 设置为true启用流式传输
+
+                // 清空之前的结果
+                $('#query-output').text('');
+                $('#referenced-videos-list').empty();
+                $('#referenced-videos').hide();
+
+                // 显示加载动画
+                $('#query-loading').show();
+
+                $.ajax({
+                    url: '/generate_response',
+                    method: 'POST',
+                    data: {
+                        query: query,
+                        stream: stream
+                    },
+                    xhrFields: {
+                        responseType: stream ? 'text' : 'json'
+                    },
+                    success: function(data) {
+                        $('#query-loading').hide();
+                        if (stream) {
+                            // 流式传输，处理逐步返回的数据
+                            const reader = data.getReader();
+                            const decoder = new TextDecoder('utf-8');
+                            let fullResponse = '';
+
+                            function readStream() {
+                                reader.read().then(({ done, value }) => {
+                                    if (done) {
+                                        $('#query-output').append('\n查询完毕。');
+                                        return;
+                                    }
+                                    const chunk = decoder.decode(value, { stream: true });
+                                    $('#query-output').append(chunk);
+                                    fullResponse += chunk;
+                                    readStream();
+                                }).catch(error => {
+                                    console.error('流式传输错误:', error);
+                                    $('#query-output').append('\nError occurred.');
+                                });
+                            }
+
+                            readStream();
+                        } else {
+                            // 非流式传输，处理完整的JSON响应
+                            if (data.error) {
+                                $('#query-output').text(`Error: ${data.error}`);
+                            } else {
+                                $('#query-output').text(data.result);
+                                displayReferencedVideos(data.video_names);
+                            }
+                        }
+                    },
+                    error: function(err) {
+                        $('#query-loading').hide();
+                        $('#query-output').text('查询失败。');
+                        console.error('查询失败:', err);
+                    }
+                });
+            });
+
+            // 显示引用的视频列表
+            function displayReferencedVideos(videoNames) {
+                if (videoNames.length === 0) {
+                    $('#referenced-videos-list').append('<p>暂无引用的视频。</p>');
+                } else {
+                    videoNames.forEach(function(videoName) {
+                        const videoObj = video_objects.find(vo => vo.video_name === videoName);
+                        if (videoObj) {
+                            videoObj.events.forEach(function(event) {
+                                const eventItem = `
+                                    <div class="event-item card" data-video-path="${event.video_path}" data-event-id="${event.event_id}">
+                                        <img src="${event.thumbnail_path}" class="thumbnail me-3" alt="缩略图">
+                                        <div class="event-description card-body">
+                                            <p>${event.description}</p>
+                                            <div class="event-time">${event.start_time} ~ ${event.end_time}</div>
+                                        </div>
+                                    </div>
+                                `;
+                                $('#referenced-videos-list').append(eventItem);
+                            });
+                        }
+                    });
+                }
+                $('#referenced-videos').show();
+            }
+
+            // 加载视频对象列表
+            const video_objects = [];
+            // 这里需要将后端的video_objects传递给前端，可以通过渲染模板或API
+            // 为简化示例，假设video_objects在前端已存在
+        });
+    </script>
+</body>
+</html>

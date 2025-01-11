@@ -1,25 +1,35 @@
-import os
+# app_console.py
 
-from backend.data.dataloader import VideoDataLoader
 from backend.rag.search_vdb_for_llm import rag_query
-
-from logger import logger
-from config import GlobalConfig
+from utils.search_and_load_videos import get_video_object_list
 
 if __name__ == '__main__':
-    data_dir = GlobalConfig.data_dir
-    try:
-        video_files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.mp4')]
-        logger.info(f'已发现 {len(video_files)} 个视频文件')
-        logger.debug(f'已发现视频文件 {video_files}')
-    except Exception as e:
-        logger.error(f'无法找到视频文件! 错误: {e}')
-        raise FileNotFoundError
+    video_objects = get_video_object_list()
 
-    for video_file in video_files:
-        video_obj = VideoDataLoader(video_file, auto_process=True, reprocess=False)
-        video_obj.add_event_to_database()
+    print(f'请注意：app_console 仅提供对数据库的查询功能。\n')
 
     while True:
-        query_result = rag_query()
-        print(query_result)
+        # 调用 rag_query 函数，stream 可以根据需要设置
+        # 例如，设置 stream=True 以启用流式传输
+        stream = True
+        query_result, video_name_list = rag_query(with_video_list=True, stream=stream)
+
+        if stream:
+            print('查询中...')
+            full_response = ''
+            for part in query_result:
+                if part.startswith("Error:"):
+                    print(part)  # 直接打印错误信息
+                    break
+                print(part, end='', flush=True)  # 实时打印每个部分
+                full_response += part
+            print()  # 换行
+            print(f'结果：{full_response}')
+        else:
+            print('查询中...')
+            print(f'结果：{query_result}')
+
+        print(f'使用的视频：{video_name_list}')
+
+        # used_video_objects = [vo for vo in video_objects if vo.video_name in video_name_list]
+        # print(used_video_objects)

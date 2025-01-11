@@ -4,6 +4,8 @@ import os
 import time
 from datetime import datetime
 
+from config import VideoConfig
+
 def detect_motion_in_video(
     video_path,
     video_start_time,       # 现实世界视频开始时间，例如 "2025-01-01 12:00:00" 
